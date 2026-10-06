@@ -1,0 +1,8 @@
+numpy>=1.26
+pyyaml>=6.0
+pytest>=8.0
+scikit-learn>=1.3      # only used by one test that cross-checks macro-F1
+torch>=2.2             # Windows laptop: CPU build; Colab already has it
+transformers>=4.40
+peft>=0.10
+datasets>=2.18

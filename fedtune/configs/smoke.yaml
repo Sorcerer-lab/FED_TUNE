@@ -1,0 +1,6 @@
+# Smoke configuration: tiny and fast, for checking the pipeline on a laptop.
+experiment: { seed: 42, rounds: 3, num_clients: 6, strategy: [fedavg] }
+data:
+  dataset: ag_news
+  partition: { mode: dirichlet, alpha: 0.3 }
+dropout: { rate: 0.2, min_participants: 2 }

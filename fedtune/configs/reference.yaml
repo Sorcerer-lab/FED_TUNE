@@ -1,0 +1,10 @@
+# Reference experiment (SRS NFR-1): 10 clients, 20 rounds. Grid block is used from Step 8.
+experiment: { seed: 42, rounds: 20, num_clients: 10, strategy: [fedavg, diversity, clustered, hybrid, fedsa] }
+data:
+  dataset: ag_news
+  partition: { mode: dirichlet, alpha: 0.3 }
+model: { base: distilbert-base-uncased, lora: { rank: 8, alpha: 16 } }
+train: { local_epochs: 1, lr: 2.0e-4, batch_size: 16 }
+dropout: { rate: 0.2, min_participants: 3 }
+aggregation: { lora_method: adapter_average }
+grid: { alpha: [0.1, 0.5, 5.0], dropout_rate: [0.0, 0.2, 0.5], seeds: [1, 2, 3] }

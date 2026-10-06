@@ -1,0 +1,10 @@
+# Real check for Colab (GPU): AG News + DistilBERT + LoRA. lr is a starting value; tuning comes in Step 10.
+experiment: { seed: 42, rounds: 3, num_clients: 6, strategy: [fedavg] }
+data:
+  dataset: ag_news
+  max_samples: 8000
+  max_length: 128
+  partition: { mode: dirichlet, alpha: 0.3 }
+model: { base: distilbert-base-uncased, lora: { rank: 8, alpha: 16 } }
+train: { local_epochs: 1, lr: 5.0e-4, batch_size: 16 }
+dropout: { rate: 0.0, min_participants: 2 }
