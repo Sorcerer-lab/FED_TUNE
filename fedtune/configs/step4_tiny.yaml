@@ -1,0 +1,11 @@
+# Offline check of dropout + network + deadline (synthetic data, tiny random model, CPU).
+experiment: { seed: 42, rounds: 6, num_clients: 6, strategy: [fedavg] }
+data:
+  dataset: synthetic
+  max_samples: 2000
+  max_length: 32
+  partition: { mode: dirichlet, alpha: 1.0 }
+model: { base: tiny-random, lora: { rank: 4, alpha: 8 } }
+train: { local_epochs: 2, lr: 3.0e-3, batch_size: 16 }
+dropout: { rate: 0.3, min_participants: 2 }
+network: { profile: tiered, step_time_s: 0.05, deadline_s: 3.5, jitter: 0.1, assignment: random }

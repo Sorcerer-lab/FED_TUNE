@@ -17,8 +17,8 @@ Our novelty is a smarter merge: weight each contributor by how much *new coverag
 | 1 | Project skeleton, config + validation, seeding, partitioner, partition report | UC1, UC2, FR 1-3, 5-7 | `01_...` (ready) |
 | 2 | Dataset loading, tokenisation, LoRA client trainer, evaluator | FR 4, 9, 10, 24 | `02_...` (ready) |
 | 3 | Round loop with FedAvg, JSONL logging, communication accounting | UC3, FR 13, 24, 25 | `03_...` (ready) |
-| 4 | Dropout simulator, minimum participants, participation log, failure handling (+ optional network model) | UC4, UC8, FR 19-23, 33 | next |
-| 5 | Checkpoint and resume | UC9, FR 27, 34 | |
+| 4 | Dropout simulator, minimum participants, skipped rounds, broken-update handling, network model with deadline | UC4, UC8, UC12 | `04_...` (ready) |
+| 5 | Checkpoint and resume | UC9, FR 27, 34 | next |
 | 6 | Client summaries and diversity-aware aggregation | FR 11-14 | |
 | 7 | Clustered aggregation and the hybrid | FR 15, 15a | |
 | 8 | LoRA merge methods (averaging, stacking, product + re-factorisation) and FedSA-LoRA baseline | FR 16 | |
@@ -56,3 +56,11 @@ Our novelty is a smarter merge: weight each contributor by how much *new coverag
 - **Client drift:** a client's model moving toward its own data's quirks, away from what is good for everyone.
 - **JSONL:** a text file with one JSON object per line; easy to append to and safe to read after a crash.
 - **Upload / download bytes:** size of the trainable tensors sent from clients to the server / from the server to clients.
+- **Bandwidth (Mbit/s):** how many millions of bits per second a link carries; 8 bits make one byte.
+- **Latency:** the fixed delay of one transfer, independent of its size.
+- **Straggler:** a client too slow to finish within the round deadline.
+- **Deadline:** the longest the server waits in a round; later updates are ignored.
+- **Simulated time:** time computed from formulas (not measured with a clock), so it is identical for every strategy.
+- **Jitter:** small random variation of bandwidth from round to round.
+- **Skipped round:** a round with too few valid participants; the global model does not change.
+- **Non-finite update:** an update containing NaN (not a number) or Inf (infinity), usually from numeric overflow.

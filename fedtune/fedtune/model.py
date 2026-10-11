@@ -77,3 +77,8 @@ def state_bytes_split(state) -> tuple[int, int]:
     """(bytes in LoRA matrices, bytes in everything else i.e. the classification head)."""
     lora = sum(t.numel() * t.element_size() for n, t in state.items() if "lora_" in n)
     return int(lora), state_num_bytes(state) - int(lora)
+
+
+def is_finite_state(state) -> bool:
+    """False if any tensor of a client update contains NaN or Inf (SRS FR-33)."""
+    return all(bool(torch.isfinite(t).all()) for t in state.values() if t.is_floating_point())

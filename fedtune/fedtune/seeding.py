@@ -8,7 +8,7 @@ strategy comparisons would not be fair (SRS FR-3, FR-17).
 import numpy as np
 
 # Fixed integer id per stream. Never renumber: it would change every old result.
-STREAMS = {"partition": 1, "dropout": 2, "model_init": 3, "training": 4, "summary": 5, "data": 6}
+STREAMS = {"partition": 1, "dropout": 2, "model_init": 3, "training": 4, "summary": 5, "data": 6, "network": 7}
 
 
 def stream(seed: int, name: str, *keys: int) -> np.random.Generator:

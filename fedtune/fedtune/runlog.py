@@ -58,16 +58,26 @@ def build_summary(records: list, run_id: str, strategy: str, total_time_s: float
     done = [r for r in rounds if not r["skipped"]]
     last = records[-1]
     accs = [m["accuracy"] for m in last["per_client"].values()]
+    n = lambda key: int(sum(len(r.get(key, [])) for r in rounds))  # noqa: E731
+    reasons = {}
+    for r in rounds:
+        if r["skipped"]:
+            k = r.get("skip_reason") or "unknown"
+            reasons[k] = reasons.get(k, 0) + 1
     return {
         "run_id": run_id,
         "strategy": strategy,
+        "status": "completed",
         "rounds_completed": len(done),
         "rounds_skipped": len(rounds) - len(done),
+        "skip_reasons": reasons,
         "mean_participants_per_round": float(np.mean([len(r["participating_clients"]) for r in rounds])) if rounds else 0.0,
+        "absences": {"dropout": n("dropped_clients"), "deadline": n("late_clients"), "non_finite": n("excluded_clients")},
         "initial_metrics": records[0]["global_metrics"],
         "final_metrics": last["global_metrics"],
         "per_client_accuracy_dispersion": dispersion(accs) if accs else None,
         "cumulative_comm_bytes": last["comm_cum_bytes"],
+        "simulated_time_s": float(last.get("sim_time_cum_s", 0.0)),
         "total_time_s": total_time_s,
         "peak_memory_mb": peak_memory_mb,
     }

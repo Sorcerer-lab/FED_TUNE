@@ -1,0 +1,11 @@
+# Colab (GPU): AG News, 10 clients, tiered network, 40 s deadline, 20% random dropout.
+experiment: { seed: 42, rounds: 10, num_clients: 10, strategy: [fedavg] }
+data:
+  dataset: ag_news
+  max_samples: 8000
+  max_length: 128
+  partition: { mode: dirichlet, alpha: 0.3 }
+model: { base: distilbert-base-uncased, lora: { rank: 8, alpha: 16 } }
+train: { local_epochs: 1, lr: 5.0e-4, batch_size: 16 }
+dropout: { rate: 0.2, min_participants: 3 }
+network: { profile: tiered, step_time_s: 0.1, deadline_s: 40.0, jitter: 0.1, assignment: random }

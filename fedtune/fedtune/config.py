@@ -13,6 +13,8 @@ import yaml
 STRATEGIES = ("fedavg", "diversity", "clustered", "hybrid", "fedsa")
 PARTITION_MODES = ("dirichlet", "quantity", "domain", "language")
 LORA_METHODS = ("adapter_average", "stack", "product_refactor")
+NETWORK_PROFILES = ("off", "homogeneous", "tiered")
+NETWORK_ASSIGN = ("random", "large_shards_slow", "small_shards_slow")
 DATASETS = ("synthetic", "ag_news", "multi_nli", "xnli")
 
 
@@ -36,6 +38,9 @@ DEFAULTS: dict[str, Any] = {
     "train": {"local_epochs": 1, "lr": 2e-4, "batch_size": 16},
     "dropout": {"rate": 0.0, "min_participants": 2},
     "aggregation": {"lora_method": "adapter_average"},
+    "network": {"profile": "off", "uplink_mbps": 10.0, "downlink_mbps": 50.0, "latency_ms": 50.0,
+                "slowdown": 1.0, "deadline_s": None, "step_time_s": 0.1, "jitter": 0.0,
+                "assignment": "random"},
     "grid": None,
 }
 
@@ -69,6 +74,16 @@ SCHEMA: dict[str, tuple[tuple, Any, str]] = {
     "train.batch_size": ((int,), lambda v: 1 <= v <= 1024, "integer in [1, 1024]"),
     "dropout.rate": (_num, lambda v: 0 <= v <= 1, "number in [0, 1]"),
     "dropout.min_participants": ((int,), lambda v: v >= 1, "integer >= 1"),
+    "network.profile": ((str,), lambda v: v in NETWORK_PROFILES, f"one of {list(NETWORK_PROFILES)}"),
+    "network.uplink_mbps": (_num, lambda v: v > 0, "number > 0 (Mbit/s)"),
+    "network.downlink_mbps": (_num, lambda v: v > 0, "number > 0 (Mbit/s)"),
+    "network.latency_ms": (_num, lambda v: v >= 0, "number >= 0 (milliseconds, one way)"),
+    "network.slowdown": (_num, lambda v: v >= 1, "number >= 1 (1 = reference compute speed)"),
+    "network.deadline_s": ((int, float, type(None)), lambda v: v is None or v > 0,
+                           "null (wait for everyone) or number > 0 (seconds)"),
+    "network.step_time_s": (_num, lambda v: v > 0, "number > 0 (seconds per local optimisation step)"),
+    "network.jitter": (_num, lambda v: 0 <= v < 1, "number in [0, 1)"),
+    "network.assignment": ((str,), lambda v: v in NETWORK_ASSIGN, f"one of {list(NETWORK_ASSIGN)}"),
     "aggregation.lora_method": ((str,), lambda v: v in LORA_METHODS, f"one of {list(LORA_METHODS)}"),
 }
 
@@ -143,6 +158,9 @@ def validate(cfg: dict) -> dict:
     n, m = cfg["experiment"]["num_clients"], cfg["dropout"]["min_participants"]
     if m > n:
         raise ConfigError(f"dropout.min_participants: {m} exceeds experiment.num_clients ({n}). Allowed: integer in [1, {n}]")
+    if cfg["network"]["deadline_s"] is not None and cfg["network"]["profile"] == "off":
+        raise ConfigError("network.deadline_s: needs network.profile other than 'off'. "
+                          "Allowed: null, or set network.profile to 'homogeneous' or 'tiered'")
     grid = cfg.get("grid")
     if grid is not None:
         valid_grid_keys = {"alpha", "heterogeneity", "dropout_rate", "seeds"}
@@ -171,4 +189,8 @@ def load_config(path: str | None = None, overrides: list[str] | None = None) -> 
         cfg = _deep_merge(cfg, user)
     if overrides:
         cfg = apply_overrides(cfg, overrides)
+    # YAML 1.1 reads an unquoted `off` as the boolean False; the profile name is the word "off"
+    net = cfg.get("network")
+    if isinstance(net, dict) and net.get("profile") is False:
+        net["profile"] = "off"
     return validate(cfg)

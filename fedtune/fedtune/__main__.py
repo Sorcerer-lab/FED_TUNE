@@ -1,4 +1,4 @@
-"""Command line: python -m fedtune {validate,demo-partition,local-check,run} ..."""
+"""Command line: python -m fedtune {validate,demo-partition,local-check,network-demo,run} ..."""
 import argparse
 import json
 import sys
@@ -25,6 +25,9 @@ def main(argv=None) -> int:
     lc = sub.add_parser("local-check", help="Step 2: train each client once and evaluate (needs torch)")
     _common(lc)
     lc.add_argument("--max-clients", type=int, default=None, help="only train the first N clients")
+    nd = sub.add_parser("network-demo", help="Step 4: show participation, dropout and network times (no training, no torch)")
+    _common(nd)
+    nd.add_argument("--payload-mb", type=float, default=2.964, help="size of one model update in MB (default: DistilBERT LoRA+head)")
     rn = sub.add_parser("run", help="Step 3: federated training with every strategy in the config (needs torch)")
     _common(rn)
     rn.add_argument("--out", default="runs", help="folder for run logs (default: runs)")
@@ -35,6 +38,10 @@ def main(argv=None) -> int:
         if args.cmd == "validate":
             print("config OK")
             print(json.dumps(cfg, indent=2))
+            return 0
+        if args.cmd == "network-demo":
+            from .network_demo import network_demo
+            network_demo(cfg, args.payload_mb)
             return 0
         if args.cmd == "run":
             from .runner import run_all
