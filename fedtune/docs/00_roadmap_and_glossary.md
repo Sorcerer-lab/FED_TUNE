@@ -18,9 +18,9 @@ Our novelty is a smarter merge: weight each contributor by how much *new coverag
 | 2 | Dataset loading, tokenisation, LoRA client trainer, evaluator | FR 4, 9, 10, 24 | `02_...` (ready) |
 | 3 | Round loop with FedAvg, JSONL logging, communication accounting | UC3, FR 13, 24, 25 | `03_...` (ready) |
 | 4 | Dropout simulator, minimum participants, skipped rounds, broken-update handling, network model with deadline | UC4, UC8, UC12 | `04_...` (ready) |
-| 5 | Checkpoint and resume | UC9, FR 27, 34 | next |
-| 6 | Client summaries and diversity-aware aggregation | FR 11-14 | |
-| 7 | Clustered aggregation and the hybrid | FR 15, 15a | |
+| 5 | Checkpoint and resume | UC9, FR 27, 34 | `05_...` (ready) |
+| 6 | Client summaries and diversity-aware aggregation | FR 11-14 | `06_...` (ready) |
+| 7 | Clustered aggregation and the hybrid | FR 15, 15a | next |
 | 8 | LoRA merge methods (averaging, stacking, product + re-factorisation) and FedSA-LoRA baseline | FR 16 | |
 | 9 | Plug-in strategy interface, stale-update reuse, dropout-compensation extension | UC11, FR 18, 22 | |
 | 10 | Grid runner, seeds, fair tuning protocol | UC5, UC6, FR 26 | |
@@ -64,3 +64,14 @@ Our novelty is a smarter merge: weight each contributor by how much *new coverag
 - **Jitter:** small random variation of bandwidth from round to round.
 - **Skipped round:** a round with too few valid participants; the global model does not change.
 - **Non-finite update:** an update containing NaN (not a number) or Inf (infinity), usually from numeric overflow.
+- **Checkpoint:** a saved snapshot from which a run can continue.
+- **Atomic write:** writing so that the file is always either old or complete, never half-written (temporary file, then rename).
+- **fsync:** forcing the operating system to really write buffered data to disk.
+- **Hash (fingerprint):** a short fixed-length value computed from data; any change to the data changes it.
+- **Byte offset:** the position in a file, counted in bytes from the start.
+- **Embedding:** a vector of numbers representing the meaning of a text; similar texts get nearby vectors.
+- **k-means:** a clustering method: repeatedly assign points to the nearest centre and move each centre to the mean of its points.
+- **Centroid:** the centre of a cluster.
+- **Cosine similarity:** how alike two directions are (1 = same direction, 0 = unrelated, -1 = opposite).
+- **Coverage gain (leave-one-out):** how much of the data space is lost if one client is removed.
+- **Ablation:** an experiment that switches one part off (for example gamma = 0) to see what that part contributes.

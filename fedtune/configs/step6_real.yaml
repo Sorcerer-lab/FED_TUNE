@@ -1,0 +1,11 @@
+# Colab (GPU): FedAvg vs diversity-aware aggregation under strong label skew (AG News, alpha 0.1).
+experiment: { seed: 42, rounds: 10, num_clients: 10, strategy: [fedavg, diversity] }
+data:
+  dataset: ag_news
+  max_samples: 8000
+  max_length: 128
+  partition: { mode: dirichlet, alpha: 0.1 }
+model: { base: distilbert-base-uncased, lora: { rank: 8, alpha: 16 } }
+train: { local_epochs: 1, lr: 5.0e-4, batch_size: 16 }
+dropout: { rate: 0.0, min_participants: 3 }
+diversity: { clusters: 8, beta: 1.0, gamma: 1.0, epsilon: 0.001, max_weight: null, universe: participants, gain: per_sample }

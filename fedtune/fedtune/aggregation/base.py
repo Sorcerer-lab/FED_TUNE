@@ -20,6 +20,14 @@ class AggregationResult:
     state: dict
     weights: dict            # client_id -> weight actually used (sums to 1)
     clusters: list | None = None
+    info: dict | None = None  # strategy diagnostics that are logged (for example coverage gains)
+
+
+@dataclass
+class AggContext:
+    """What a strategy may look at besides the updates themselves."""
+    summaries: dict | None = None   # client_id -> ClientSummary (bounded data summary), if the strategy needs them
+    n_clients: int = 0
 
 
 def normalise(w) -> np.ndarray:
@@ -50,6 +58,14 @@ class Aggregator:
     """Base class. A strategy only has to say how much each client counts (`weights`);
     strategies that need more (clustering) override `aggregate`."""
     name = "base"
+    needs_summary = False
+
+    def state_dict(self) -> dict:
+        """State a strategy must keep between rounds (saved in checkpoints). FedAvg has none."""
+        return {}
+
+    def load_state_dict(self, state: dict) -> None:
+        pass
 
     def weights(self, updates: list, ctx=None) -> np.ndarray:
         raise NotImplementedError
@@ -59,4 +75,8 @@ class Aggregator:
             raise ValueError("cannot aggregate zero updates")
         w = self.weights(updates, ctx)
         state = weighted_average([u.state for u in updates], w)
-        return AggregationResult(state, {u.client_id: float(x) for u, x in zip(updates, w)})
+        return AggregationResult(state, {u.client_id: float(x) for u, x in zip(updates, w)}, None, self.info())
+
+    def info(self) -> dict | None:
+        """Diagnostics of the last `weights` call, stored in the round record."""
+        return None

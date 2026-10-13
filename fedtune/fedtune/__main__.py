@@ -1,4 +1,4 @@
-"""Command line: python -m fedtune {validate,demo-partition,local-check,network-demo,run} ..."""
+"""Command line: python -m fedtune {validate,demo-partition,local-check,network-demo,diversity-demo,run} ..."""
 import argparse
 import json
 import sys
@@ -28,9 +28,13 @@ def main(argv=None) -> int:
     nd = sub.add_parser("network-demo", help="Step 4: show participation, dropout and network times (no training, no torch)")
     _common(nd)
     nd.add_argument("--payload-mb", type=float, default=2.964, help="size of one model update in MB (default: DistilBERT LoRA+head)")
+    dd = sub.add_parser("diversity-demo", help="Step 6: show coverage gains and diversity weights on synthetic embeddings (no torch)")
+    _common(dd)
     rn = sub.add_parser("run", help="Step 3: federated training with every strategy in the config (needs torch)")
     _common(rn)
     rn.add_argument("--out", default="runs", help="folder for run logs (default: runs)")
+    rn.add_argument("--resume", action="store_true", help="continue an unfinished run from its last checkpoint (safe to always add)")
+    rn.add_argument("--overwrite", action="store_true", help="start an unfinished run over, discarding its logs and checkpoints")
     args = ap.parse_args(argv)
 
     try:
@@ -43,9 +47,13 @@ def main(argv=None) -> int:
             from .network_demo import network_demo
             network_demo(cfg, args.payload_mb)
             return 0
+        if args.cmd == "diversity-demo":
+            from .diversity_demo import diversity_demo
+            diversity_demo(cfg)
+            return 0
         if args.cmd == "run":
             from .runner import run_all
-            run_all(cfg, args.out)
+            run_all(cfg, args.out, resume=args.resume, overwrite=args.overwrite)
             return 0
         if args.cmd == "local-check":
             from .pipeline import run_local_check

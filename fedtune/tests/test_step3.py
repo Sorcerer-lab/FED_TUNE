@@ -58,8 +58,8 @@ def test_zero_updates_rejected():
 
 def test_planned_and_unknown_strategies():
     with pytest.raises(StrategyNotImplemented) as e:
-        get_aggregator("diversity")
-    assert "Step 6" in str(e.value)
+        get_aggregator("clustered")
+    assert "Step 7" in str(e.value)
     with pytest.raises(StrategyNotImplemented):
         get_aggregator("nonsense")
 

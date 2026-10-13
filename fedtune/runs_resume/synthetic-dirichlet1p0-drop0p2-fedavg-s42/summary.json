@@ -1,0 +1,37 @@
+{
+  "run_id": "synthetic-dirichlet1p0-drop0p2-fedavg-s42",
+  "strategy": "fedavg",
+  "status": "completed",
+  "rounds_completed": 12,
+  "rounds_skipped": 0,
+  "skip_reasons": {},
+  "mean_participants_per_round": 4.666666666666667,
+  "absences": {
+    "dropout": 16,
+    "deadline": 0,
+    "non_finite": 0
+  },
+  "initial_metrics": {
+    "accuracy": 0.255,
+    "macro_f1": 0.10159362549800798,
+    "loss": 1.3862347412109375
+  },
+  "final_metrics": {
+    "accuracy": 0.37,
+    "macro_f1": 0.30361624259323805,
+    "loss": 1.3654889106750487
+  },
+  "per_client_accuracy_dispersion": {
+    "mean": 0.3873472577436772,
+    "std": 0.12844677663458462,
+    "min": 0.1956521739130435,
+    "max": 0.5333333333333333
+  },
+  "cumulative_comm_bytes": {
+    "up": 258944,
+    "down": 258944
+  },
+  "simulated_time_s": 0.0,
+  "total_time_s": 43.44838261604309,
+  "peak_memory_mb": null
+}

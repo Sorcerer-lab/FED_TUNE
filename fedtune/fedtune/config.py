@@ -6,6 +6,8 @@ message that names the key and the allowed range (SRS UC1, FR-1, FR-2).
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 from typing import Any
 
 import yaml
@@ -13,6 +15,8 @@ import yaml
 STRATEGIES = ("fedavg", "diversity", "clustered", "hybrid", "fedsa")
 PARTITION_MODES = ("dirichlet", "quantity", "domain", "language")
 LORA_METHODS = ("adapter_average", "stack", "product_refactor")
+DIVERSITY_UNIVERSE = ("participants", "all")
+DIVERSITY_GAIN = ("per_sample", "total")
 NETWORK_PROFILES = ("off", "homogeneous", "tiered")
 NETWORK_ASSIGN = ("random", "large_shards_slow", "small_shards_slow")
 DATASETS = ("synthetic", "ag_news", "multi_nli", "xnli")
@@ -38,6 +42,9 @@ DEFAULTS: dict[str, Any] = {
     "train": {"local_epochs": 1, "lr": 2e-4, "batch_size": 16},
     "dropout": {"rate": 0.0, "min_participants": 2},
     "aggregation": {"lora_method": "adapter_average"},
+    "diversity": {"clusters": 8, "beta": 1.0, "gamma": 1.0, "epsilon": 0.001, "max_weight": None,
+                  "universe": "participants", "gain": "per_sample"},
+    "checkpoint": {"every": 1, "keep": 2},
     "network": {"profile": "off", "uplink_mbps": 10.0, "downlink_mbps": 50.0, "latency_ms": 50.0,
                 "slowdown": 1.0, "deadline_s": None, "step_time_s": 0.1, "jitter": 0.0,
                 "assignment": "random"},
@@ -84,6 +91,16 @@ SCHEMA: dict[str, tuple[tuple, Any, str]] = {
     "network.step_time_s": (_num, lambda v: v > 0, "number > 0 (seconds per local optimisation step)"),
     "network.jitter": (_num, lambda v: 0 <= v < 1, "number in [0, 1)"),
     "network.assignment": ((str,), lambda v: v in NETWORK_ASSIGN, f"one of {list(NETWORK_ASSIGN)}"),
+    "diversity.clusters": ((int,), lambda v: 1 <= v <= 64, "integer in [1, 64] (centroids per client summary)"),
+    "diversity.beta": (_num, lambda v: 0 <= v <= 4, "number in [0, 4] (exponent of the data volume)"),
+    "diversity.gamma": (_num, lambda v: 0 <= v <= 4, "number in [0, 4] (exponent of the coverage gain; 0 = FedAvg)"),
+    "diversity.epsilon": (_num, lambda v: v > 0, "number > 0 (keeps every client's weight positive)"),
+    "diversity.max_weight": ((int, float, type(None)), lambda v: v is None or 0 < v <= 1,
+                             "null (no cap) or number in (0, 1]"),
+    "diversity.gain": ((str,), lambda v: v in DIVERSITY_GAIN, f"one of {list(DIVERSITY_GAIN)} (per_sample divides the gain by the client's size)"),
+    "diversity.universe": ((str,), lambda v: v in DIVERSITY_UNIVERSE, f"one of {list(DIVERSITY_UNIVERSE)}"),
+    "checkpoint.every": ((int,), lambda v: 0 <= v <= 1000, "integer in [0, 1000] (0 = never; 1 = after every round)"),
+    "checkpoint.keep": ((int,), lambda v: 1 <= v <= 20, "integer in [1, 20] (how many checkpoints to keep)"),
     "aggregation.lora_method": ((str,), lambda v: v in LORA_METHODS, f"one of {list(LORA_METHODS)}"),
 }
 
@@ -194,3 +211,14 @@ def load_config(path: str | None = None, overrides: list[str] | None = None) -> 
     if isinstance(net, dict) and net.get("profile") is False:
         net["profile"] = "off"
     return validate(cfg)
+
+
+def config_hash(cfg: dict) -> str:
+    """Fingerprint of everything that defines a run. `experiment.rounds` and the checkpoint settings are
+    left out on purpose, so a finished run can be extended with more rounds and the checkpoint cadence
+    can be changed when resuming."""
+    c = copy.deepcopy(cfg)
+    c["experiment"].pop("rounds", None)
+    c.pop("checkpoint", None)
+    blob = json.dumps(c, sort_keys=True, default=str).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()[:16]

@@ -29,6 +29,7 @@ class World:
     init_state: dict
     num_labels: int
     device: torch.device = field(default_factory=lambda: torch.device("cpu"))
+    summaries: dict | None = None   # client summaries, computed once on demand (Step 6)
 
 
 def pick_device() -> torch.device:

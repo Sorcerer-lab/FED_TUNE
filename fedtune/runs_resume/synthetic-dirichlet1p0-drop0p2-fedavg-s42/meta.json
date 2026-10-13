@@ -1,0 +1,4 @@
+{
+  "run_id": "synthetic-dirichlet1p0-drop0p2-fedavg-s42",
+  "strategy": "fedavg"
+}

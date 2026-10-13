@@ -28,17 +28,29 @@ def _plain(o):
 
 
 class RunLogger:
-    """Writes one JSON object per round, flushed immediately, so logs stay readable even if
-    the run crashes (NFR-7)."""
+    """Writes one JSON object per round, flushed and fsynced immediately, so logs stay readable even if
+    the run crashes (NFR-7). Written in binary so byte offsets mean the same on Windows and Linux; a
+    resumed run truncates the file to the offset stored in its checkpoint, so no round appears twice."""
 
-    def __init__(self, run_dir: str):
+    def __init__(self, run_dir: str, resume_offset: int | None = None):
         os.makedirs(run_dir, exist_ok=True)
         self.dir = run_dir
-        self._f = open(os.path.join(run_dir, "rounds.jsonl"), "w", encoding="utf-8")
+        path = os.path.join(run_dir, "rounds.jsonl")
+        if resume_offset is None:
+            self._f = open(path, "wb")
+        else:
+            with open(path, "r+b") as f:
+                f.truncate(resume_offset)
+            self._f = open(path, "ab")
 
     def log_round(self, record: dict) -> None:
-        self._f.write(json.dumps(record, default=_plain) + "\n")
+        self._f.write((json.dumps(record, default=_plain) + "\n").encode("utf-8"))
         self._f.flush()
+        os.fsync(self._f.fileno())
+
+    def offset(self) -> int:
+        """Byte position after the last logged round."""
+        return self._f.tell()
 
     def write_json(self, name: str, obj) -> None:
         with open(os.path.join(self.dir, name), "w", encoding="utf-8") as f:
@@ -50,6 +62,13 @@ class RunLogger:
     def __exit__(self, *exc):
         self._f.close()
         return False
+
+
+def read_records(path: str, upto: int | None = None) -> list:
+    """Round records from a rounds.jsonl file, optionally only the first `upto` bytes."""
+    with open(path, "rb") as f:
+        data = f.read() if upto is None else f.read(upto)
+    return [json.loads(line) for line in data.decode("utf-8").splitlines() if line.strip()]
 
 
 def build_summary(records: list, run_id: str, strategy: str, total_time_s: float, peak_memory_mb) -> dict:
